@@ -1,6 +1,6 @@
-﻿using System;
-using System.Text;
+﻿using Jint.Native.String;
 using Jint.Runtime;
+using System;
 
 namespace Jint.Native
 {
@@ -13,7 +13,9 @@ namespace Jint.Native
         private static readonly JsString Empty = new JsString("");
         private static readonly JsString NullString = new JsString("null");
 
-        internal string _value;
+        private string _value;
+        internal JsString _next;
+        internal JsString _last;
 
         static JsString()
         {
@@ -30,6 +32,8 @@ namespace Jint.Native
         public JsString(string value) : base(Types.String)
         {
             _value = value;
+            _next = null;
+            _last = this;
         }
 
         public override object ToObject()
@@ -37,24 +41,38 @@ namespace Jint.Native
             return _value;
         }
 
-        public JsString(char value) : base(Types.String)
+        public JsString(char value) : this(value.ToString())
         {
-            _value = value.ToString();
+        }
+
+        public virtual JsString Append(JsString jsString)
+        {
+            if (ReferenceEquals(this, Empty))
+            {
+                return jsString;
+            }
+
+            _last._next = jsString;
+            _last = jsString._last;
+
+            return this;
         }
 
         public virtual JsString Append(JsValue jsValue)
         {
-            return new ConcatenatedString(string.Concat(_value, TypeConverter.ToString(jsValue)));
-        }
-
-        internal virtual JsString EnsureCapacity(int capacity)
-        {
-            return new ConcatenatedString(_value, capacity);
+            if (jsValue.IsString())
+            {
+                return Append((JsString)jsValue);
+            }
+            else
+            {
+                return Append(new JsString(TypeConverter.ToString(jsValue)));
+            }
         }
 
         internal virtual bool IsNullOrEmpty()
         {
-            return string.IsNullOrEmpty(_value);
+            return string.IsNullOrEmpty(_value) && (_next == null || _next.IsNullOrEmpty());
         }
 
         internal static JsString Create(string value)
@@ -94,7 +112,35 @@ namespace Jint.Native
 
         public override string ToString()
         {
-            return _value;
+            if (_next == null)
+            {
+                return _value;
+            }
+            else
+            {
+                var builder = StringExecutionContext.Current.GetStringBuilder(0);
+                builder.Clear();
+
+                builder.Append(_value);
+
+                var next = _next;
+
+                while (next != null)
+                {
+                    if (next._value != null)
+                    {
+                        builder.Append(next._value);
+                    }
+
+                    next = next._next;
+                }
+
+                _value = builder.ToString();
+
+                _next = null;
+                _last = this;
+                return _value;
+            }
         }
 
         public override bool Equals(JsValue obj)
@@ -124,83 +170,15 @@ namespace Jint.Native
                 return true;
             }
 
-            return _value == other._value;
-        }
-
-        internal sealed class ConcatenatedString : JsString
-        {
-            private StringBuilder _stringBuilder;
-            private bool _dirty;
-
-            internal ConcatenatedString(string value, int capacity = 0) : base(value)
+            if (ReferenceEquals(_next, null) && ReferenceEquals(other._next, null))
             {
-                if (capacity > 0)
-                {
-                    _stringBuilder = new StringBuilder(value, capacity);
-                }
-                else
-                {
-                    _value = value;
-                }
+                return _value == other._value;
             }
-
-            public override string ToString()
+            else
             {
-                if (_dirty)
-                {
-                    _value = _stringBuilder.ToString();
-                    _dirty = false;
-                }
-
-                return _value;
-            }
-
-            public override JsString Append(JsValue jsValue)
-            {
-                var value = TypeConverter.ToString(jsValue);
-                if (_stringBuilder == null)
-                {
-                    _stringBuilder = new StringBuilder(_value, _value.Length + value.Length);
-                }
-
-                _stringBuilder.Append(value);
-                _dirty = true;
-
-                return this;
-            }
-
-            internal override JsString EnsureCapacity(int capacity)
-            {
-                _stringBuilder.EnsureCapacity(capacity);
-                return this;
-            }
-
-            internal override bool IsNullOrEmpty()
-            {
-                return _stringBuilder == null && string.IsNullOrEmpty(_value)
-                    || _stringBuilder != null && _stringBuilder.Length == 0;
-            }
-
-            public override bool Equals(JsValue other)
-            {
-                if (other is ConcatenatedString cs)
-                {
-                    return _stringBuilder.Equals(cs._stringBuilder);
-                }
-
-                if (other.Type == Types.String)
-                {
-                    var otherString = other.AsStringWithoutTypeCheck();
-                    if (otherString.Length != _stringBuilder.Length)
-                    {
-                        return false;
-                    }
-
-                    return ToString().Equals(otherString);
-                }
-
-                return base.Equals(other);
+                return this.ToString() == other.ToString();
             }
         }
+
     }
 }

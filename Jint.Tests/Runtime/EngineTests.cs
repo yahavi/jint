@@ -1266,7 +1266,7 @@ namespace Jint.Tests.Runtime
                 var context = {name: 'Paul'};
                 var html = template(context);
 
-                assert('Hello Paul' == html);
+                equal('Hello Paul', html);
             ");
         }
 

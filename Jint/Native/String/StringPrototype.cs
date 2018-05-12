@@ -756,28 +756,14 @@ namespace Jint.Native.String
         {
             TypeConverter.CheckObjectCoercible(Engine, thisObj);
 
-            // try to hint capacity if possible
-            int capacity = 0;
-            for (int i = 0; i < arguments.Length; ++i)
+            if (arguments.Length == 0)
             {
-                if (arguments[i].Type == Types.String)
-                {
-                    capacity += arguments[i].AsStringWithoutTypeCheck().Length;
-                }
+                return Undefined;
             }
 
-            var value = TypeConverter.ToString(thisObj);
-            capacity += value.Length;
-            if (!(thisObj is JsString jsString))
-            {
-                jsString = new JsString.ConcatenatedString(value, capacity);
-            }
-            else
-            {
-                jsString = jsString.EnsureCapacity(capacity);
-            }
+            var jsString = arguments[0].IsString() ? (JsString)arguments[0] : new JsString(TypeConverter.ToString(arguments[0]));
 
-            for (int i = 0; i < arguments.Length; i++)
+            for (int i = 1; i < arguments.Length; i++)
             {
                 jsString = jsString.Append(arguments[i]);
             }

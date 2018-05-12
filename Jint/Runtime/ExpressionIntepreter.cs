@@ -87,7 +87,7 @@ namespace Jint.Runtime
                     {
                         if (!(lprim is JsString jsString))
                         {
-                            jsString = new JsString.ConcatenatedString(TypeConverter.ToString(lprim));
+                            jsString = new JsString(TypeConverter.ToString(lprim));
                         }
                         lval = jsString.Append(rprim);
                     }
