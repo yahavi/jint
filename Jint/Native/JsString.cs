@@ -15,7 +15,6 @@ namespace Jint.Native
 
         private string _value;
         internal JsString _next;
-        internal JsString _last;
 
         static JsString()
         {
@@ -24,8 +23,8 @@ namespace Jint.Native
 
             for (int i = 0; i <= AsciiMax; i++)
             {
-                _charToJsValue[i] = new JsString((char) i);
-                _charToStringJsValue[i] = new JsString(((char) i).ToString());
+                _charToJsValue[i] = new JsString((char)i);
+                _charToStringJsValue[i] = new JsString(((char)i).ToString());
             }
         }
 
@@ -33,7 +32,6 @@ namespace Jint.Native
         {
             _value = value;
             _next = null;
-            _last = this;
         }
 
         public override object ToObject()
@@ -45,16 +43,35 @@ namespace Jint.Native
         {
         }
 
+        public JsString(JsString other) : base(Types.String)
+        {
+            if (other != null)
+            {
+                _value = other._value;
+                _next = new JsString(other._next);
+            }
+        }
+
         public virtual JsString Append(JsString jsString)
         {
             if (ReferenceEquals(this, Empty))
             {
-                return jsString;
+                return new JsString(jsString);
             }
 
-            _last._next = jsString;
-            _last = jsString._last;
+            Last._next = new JsString(jsString);
 
+            return this;
+        }
+
+        public virtual JsString Append(string value)
+        {
+            if (ReferenceEquals(this, Empty))
+            {
+                return Create(value);
+            }
+
+            Last._next = Create(value);
             return this;
         }
 
@@ -66,7 +83,22 @@ namespace Jint.Native
             }
             else
             {
-                return Append(new JsString(TypeConverter.ToString(jsValue)));
+                return Append(TypeConverter.ToString(jsValue));
+            }
+        }
+
+        internal JsString Last
+        {
+            get
+            {
+                if (_next == null)
+                {
+                    return this;
+                }
+                else
+                {
+                    return _next.Last;
+                }
             }
         }
 
@@ -138,7 +170,6 @@ namespace Jint.Native
                 _value = builder.ToString();
 
                 _next = null;
-                _last = this;
                 return _value;
             }
         }
