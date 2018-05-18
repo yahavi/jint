@@ -59,7 +59,7 @@ namespace Jint.Native
                 return new JsString(jsString);
             }
 
-            var result = Last._next = new JsString(this);
+            var result = new JsString(this);
             result.Last._next = new JsString(jsString);
 
             return result;
@@ -73,7 +73,7 @@ namespace Jint.Native
             }
 
             var result = new JsString(this);
-            result._next = Create(value);
+            result.Last._next = Create(value);
 
             return result;
         }
