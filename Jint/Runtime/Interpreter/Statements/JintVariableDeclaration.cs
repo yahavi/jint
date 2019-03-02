@@ -67,7 +67,7 @@ namespace Jint.Runtime.Interpreter.Statements
         {
             var declarations = _declarations;
 
-            if (_statement.Kind == "var")
+            if (_statement.Kind == VariableDeclarationKind.Var)
             {
                 for (var i = 0; i < (uint)declarations.Length; i++)
                 {

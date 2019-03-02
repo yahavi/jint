@@ -119,7 +119,7 @@ namespace Jint.Runtime.Interpreter
         {
             foreach(var statement in _statements)
             {
-                if (statement is VariableDeclaration v && v.Kind != "var")
+                if (statement is VariableDeclaration v && v.Kind != VariableDeclarationKind.Var)
                 {
                     yield return v;
                 }
@@ -134,11 +134,11 @@ namespace Jint.Runtime.Interpreter
                 {
                     var identifier = (JintIdentifierExpression)JintExpression.Build(_engine, (Expression)declaration.Id);
 
-                    if (variableDeclaration.Kind == "const")
+                    if (variableDeclaration.Kind ==  VariableDeclarationKind.Const)
                     {
                         record.CreateImmutableBinding(identifier._expressionName, true);
                     }
-                    else if (variableDeclaration.Kind == "let")
+                    else if (variableDeclaration.Kind == VariableDeclarationKind.Let)
                     {
                         record.CreateMutableBinding(identifier._expressionName, false);
                     }

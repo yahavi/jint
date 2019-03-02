@@ -275,14 +275,6 @@ namespace Jint.Tests.Test262
         {
             info.AddValue("FullPath", FullPath);
         }
-        public void Serialize(IXunitSerializationInfo info)
-        {
-            info.AddValue(nameof(Skip), Skip);
-            info.AddValue(nameof(Source), Source);
-            info.AddValue(nameof(Reason), Reason);
-            info.AddValue(nameof(FullPath), FullPath);
-            info.AddValue(nameof(Code), Code);
-        }
 
         public override string ToString()
         {
