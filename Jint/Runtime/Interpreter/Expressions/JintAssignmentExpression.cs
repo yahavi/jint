@@ -206,7 +206,8 @@ namespace Jint.Runtime.Interpreter.Expressions
                     }
 
                     var rval = right.GetValue();
-                    environmentRecord.SetMutableBinding(left._expressionName, rval, strict);
+                    environmentRecord.CreateMutableBinding(left._expressionName);
+                    environmentRecord.InitializeBinding(left._expressionName, rval);
                     return rval;
                 }
 

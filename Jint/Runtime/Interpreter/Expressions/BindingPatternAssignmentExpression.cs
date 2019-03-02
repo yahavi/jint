@@ -258,7 +258,8 @@ namespace Jint.Runtime.Interpreter.Expressions
             }
             else
             {
-                env._record.CreateMutableBinding(name, rval);
+                env._record.CreateMutableBinding(name);
+                env._record.InitializeBinding(name, rval);
             }
         }
     }

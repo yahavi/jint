@@ -31,7 +31,7 @@ using Jint.Native.Function;
         {
         }
 
-        private void SetItem(string key, in Binding value)
+        private Binding SetItem(string key, in Binding value)
         {
             if (_set && _key != key)
             {
@@ -51,6 +51,8 @@ using Jint.Native.Function;
             {
                 _dictionary[key] = value;
             }
+
+            return value;
         }
 
         private ref Binding GetExistingItem(string key)
@@ -146,14 +148,31 @@ using Jint.Native.Function;
             return false;
         }
 
-        public override void CreateMutableBinding(string name, JsValue value, bool canBeDeleted = false)
+        public override void CreateMutableBinding(string name, bool canBeDeleted = false)
         {
-            SetItem(name, new Binding(value, canBeDeleted, mutable: true));
+            SetItem(name, new Binding(canBeDeleted, mutable: true, strict: false));
+        }
+
+        public override void CreateImmutableBinding(string name, bool strict = false)
+        {
+            SetItem(name, new Binding(false, mutable: false, strict: strict));
+        }
+
+        public override void InitializeBinding(string name, JsValue value)
+        {
+            ref var binding = ref GetExistingItem(name);
+            binding.Value = value;
         }
 
         public override void SetMutableBinding(string name, JsValue value, bool strict)
         {
             ref var binding = ref GetExistingItem(name);
+
+            // Is it an uninitialized binding?
+            if (binding.Value == JsValue.Null)
+            {
+                ExceptionHelper.ThrowReferenceError(_engine, name);
+            }
 
             if (binding.Mutable)
             {
@@ -273,7 +292,8 @@ using Jint.Native.Function;
                 jsValue = HandleRestPatternIfNeeded(_engine, functionDeclaration, arguments, 0, jsValue);
                 HandleObjectPatternIfNeeded(_engine, functionDeclaration, jsValue, 0);
 
-                var binding = new Binding(jsValue, false, true);
+                var binding = new Binding(false, true, false);
+                binding.Value = jsValue;
                 _set = true;
                 _key = parameters[0];
                 _value = binding;
@@ -285,7 +305,7 @@ using Jint.Native.Function;
 
             if (ReferenceEquals(_argumentsBinding.Value, null))
             {
-                _argumentsBinding = new Binding(argumentsInstance, canBeDeleted: false, mutable: true);
+                _argumentsBinding = new Binding(canBeDeleted: false, mutable: true, strict: false) { Value = argumentsInstance };
             }
         }
 
@@ -306,7 +326,8 @@ using Jint.Native.Function;
 
                 if (empty || !TryGetValue(argName, out var existing))
                 {
-                    var binding = new Binding(jsValue, false, true);
+                    var binding = new Binding(false, true, false);
+                    binding.Value = jsValue;
                     if (argName.Length == 9 && argName == BindingNameArguments)
                     {
                         _argumentsBinding = binding;
@@ -399,7 +420,7 @@ using Jint.Native.Function;
                         var dn = id.Name;
                         if (!ContainsKey(dn))
                         {
-                            var binding = new Binding(Undefined, canBeDeleted: false, mutable: true);
+                            var binding = new Binding(canBeDeleted: false, mutable: true, strict: false);
                             SetItem(dn, binding);
                         }
                     }

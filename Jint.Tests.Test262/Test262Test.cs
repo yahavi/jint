@@ -197,10 +197,6 @@ namespace Jint.Tests.Test262
                                 skip = true;
                                 reason = "generators not implemented";
                                 break;
-                            case "let":
-                                skip = true;
-                                reason = "let not implemented";
-                                break;
                             case "async-functions":
                                 skip = true;
                                 reason = "async-functions not implemented";
@@ -272,13 +268,13 @@ namespace Jint.Tests.Test262
 
         public void Deserialize(IXunitSerializationInfo info)
         {
-            Skip = info.GetValue<bool>(nameof(Skip));
-            Source = info.GetValue<string>(nameof(Source));
-            Reason = info.GetValue<string>(nameof(Reason));
-            FullPath = info.GetValue<string>(nameof(FullPath));
-            Code = info.GetValue<string>(nameof(Code));
+            FullPath = info.GetValue<string>("FullPath");
         }
 
+        public void Serialize(IXunitSerializationInfo info)
+        {
+            info.AddValue("FullPath", FullPath);
+        }
         public void Serialize(IXunitSerializationInfo info)
         {
             info.AddValue(nameof(Skip), Skip);
@@ -290,7 +286,7 @@ namespace Jint.Tests.Test262
 
         public override string ToString()
         {
-            return Source;
+            return Path.GetFileNameWithoutExtension(FullPath);
         }
     }
 }

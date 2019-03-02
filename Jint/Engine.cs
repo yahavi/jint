@@ -435,6 +435,13 @@ namespace Jint
                     arguments: null);
 
                 var list = new JintStatementList(this, null, program.Body);
+
+                // Registers all locally scoped declarations (let, const
+                var env = LexicalEnvironment.NewDeclarativeEnvironment(this, ExecutionContext.LexicalEnvironment);
+                EnterExecutionContext(env, ExecutionContext.LexicalEnvironment, ExecutionContext.ThisBinding);
+
+                list.BlockDeclarationInstantiation(ExecutionContext.LexicalEnvironment.Record);
+
                 var result = list.Execute();
                 if (result.Type == CompletionType.Throw)
                 {
@@ -627,6 +634,16 @@ namespace Jint
         }
 
         /// <summary>
+        /// http://www.ecma-international.org/ecma-262/6.0/#sec-initializereferencedbinding
+        /// </summary>
+        public void InitializeReferenceBinding(Reference reference, JsValue value)
+        {
+            var baseValue = reference._baseValue as EnvironmentRecord;
+
+            baseValue.InitializeBinding(reference._name, value);
+        }
+
+        /// <summary>
         /// Used by PutValue when the reference has a primitive base value
         /// </summary>
         public void PutPrimitiveBase(JsValue b, string name, JsValue value, bool throwOnError)
@@ -759,6 +776,14 @@ namespace Jint
             return jsValue;
         }
 
+        // http://www.ecma-international.org/ecma-262/6.0/#sec-resolvebinding
+        internal Reference ResolveBinding(string name, LexicalEnvironment env = null)
+        {
+            env = env ?? ExecutionContext.LexicalEnvironment;
+
+            return LexicalEnvironment.GetIdentifierReference(env, name, StrictModeScope.IsStrictModeCode);
+        }
+
         //  http://www.ecma-international.org/ecma-262/5.1/#sec-10.5
         internal bool DeclarationBindingInstantiation(
             DeclarationBindingType declarationBindingType,
@@ -797,12 +822,13 @@ namespace Jint
                         var argAlreadyDeclared = env.HasBinding(argName);
                         if (!argAlreadyDeclared)
                         {
-                            env.CreateMutableBinding(argName, v);
+                            env.CreateMutableBinding(argName);
                         }
 
                         env.SetMutableBinding(argName, v, strict);
                     }
-                    env.CreateMutableBinding("arguments", argsObj);
+                    env.CreateMutableBinding("arguments", strict);
+                    env.InitializeBinding("arguments", argsObj);
                 }
             }
 
@@ -837,7 +863,7 @@ namespace Jint
                             var varAlreadyDeclared = env.HasBinding(id1.Name);
                             if (!varAlreadyDeclared)
                             {
-                                env.CreateMutableBinding(id1.Name, Undefined.Instance);
+                                env.CreateMutableBinding(id1.Name);
                             }
                         }
                     }
