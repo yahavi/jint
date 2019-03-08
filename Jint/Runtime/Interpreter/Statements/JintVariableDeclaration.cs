@@ -1,16 +1,21 @@
+using System.Collections.Generic;
+using System.Linq;
 using Esprima.Ast;
 using Jint.Native;
-using Jint.Runtime.Environments;
+using Jint.Runtime.Interpreter.Declarations;
 using Jint.Runtime.Interpreter.Expressions;
 using Jint.Runtime.References;
 
 namespace Jint.Runtime.Interpreter.Statements
 {
-    internal sealed class JintVariableDeclaration : JintStatement<VariableDeclaration>
+    internal sealed class JintVariableDeclaration : JintStatement<VariableDeclaration>, IDeclaration
     {
         private static readonly Completion VoidCompletion = new Completion(CompletionType.Normal, Undefined.Instance, null, default);
 
         private ResolvedDeclaration[] _declarations;
+
+        public System.Collections.Generic.List<string> BoundNames { get; set; }
+        public bool IsConstantDeclaration { get; set; }
 
         private sealed class ResolvedDeclaration
         {
@@ -29,6 +34,9 @@ namespace Jint.Runtime.Interpreter.Statements
         protected override void Initialize()
         {
             _declarations = new ResolvedDeclaration[_statement.Declarations.Count];
+
+            IsConstantDeclaration = _statement.Kind == VariableDeclarationKind.Const;
+            BoundNames = new System.Collections.Generic.List<string>();
 
             for (var i = 0; i < _declarations.Length; i++)
             {
@@ -52,6 +60,7 @@ namespace Jint.Runtime.Interpreter.Statements
                 }
 
                 var leftIdentifier = left as JintIdentifierExpression;
+
                 _declarations[i] = new ResolvedDeclaration
                 {
                     Left = left,
@@ -60,6 +69,11 @@ namespace Jint.Runtime.Interpreter.Statements
                     EvalOrArguments = leftIdentifier?._expressionName == "eval" || leftIdentifier?._expressionName == "arguments",
                     Init = init
                 };
+
+                if (leftIdentifier != null)
+                {
+                    BoundNames.Add(leftIdentifier._expressionName);
+                }                
             }
         }
 

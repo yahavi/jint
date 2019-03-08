@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using Esprima.Ast;
+﻿using Esprima.Ast;
 using Jint.Native;
 using Jint.Runtime.Environments;
+using Jint.Runtime.Interpreter.Declarations;
 using Jint.Runtime.Interpreter.Expressions;
 using Jint.Runtime.Interpreter.Statements;
 
@@ -17,7 +17,8 @@ namespace Jint.Runtime.Interpreter
 
         private readonly Engine _engine;
         private readonly Statement _statement;
-        private readonly Esprima.Ast.List<StatementListItem> _statements;
+        private readonly List<StatementListItem> _statements;
+        private System.Collections.Generic.List<IDeclaration> _lexicallyScopedDeclarations = new System.Collections.Generic.List<IDeclaration>();
 
         private Pair[] _jintStatements;
         private bool _initialized;
@@ -32,14 +33,25 @@ namespace Jint.Runtime.Interpreter
         private void Initialize()
         {
             _jintStatements = new Pair[_statements.Count];
+
             for (var i = 0; i < _jintStatements.Length; i++)
             {
-                var statement = JintStatement.Build(_engine, (Statement) _statements[i]);
+                var statement = (Statement) _statements[i];
+
+                var jintStatement = JintStatement.Build(_engine, statement);
                 _jintStatements[i] = new Pair
                 {
-                    Statement = statement,
+                    Statement = jintStatement,
                     Value = JintStatement.FastResolve(_statements[i])
                 };
+            }
+
+            foreach (var s in _jintStatements)
+            {
+                if (s.Statement is IDeclaration d)
+                {
+                    _lexicallyScopedDeclarations.Add(d);
+                }
             }
         }
 
@@ -115,36 +127,28 @@ namespace Jint.Runtime.Interpreter
             return _statements.Count == 1 ? JintStatement.FastResolve(_statements[0]) : null;
         }
 
-        public IEnumerable<VariableDeclaration> GetLexicallyScopedDeclarations()
-        {
-            foreach(var statement in _statements)
-            {
-                if (statement is VariableDeclaration v && v.Kind != VariableDeclarationKind.Var)
-                {
-                    yield return v;
-                }
-            }
-        }
-
         public void BlockDeclarationInstantiation(EnvironmentRecord record)
         {
-            foreach (var variableDeclaration in GetLexicallyScopedDeclarations())
+            foreach (var d in _lexicallyScopedDeclarations)
             {
-                foreach (var declaration in variableDeclaration.Declarations)
+                foreach (var dn in d.BoundNames)
                 {
-                    var identifier = (JintIdentifierExpression)JintExpression.Build(_engine, (Expression)declaration.Id);
-
-                    if (variableDeclaration.Kind ==  VariableDeclarationKind.Const)
+                    if (d.IsConstantDeclaration)
                     {
-                        record.CreateImmutableBinding(identifier._expressionName, true);
+                        record.CreateImmutableBinding(dn, true);
                     }
-                    else if (variableDeclaration.Kind == VariableDeclarationKind.Let)
+                    else
                     {
-                        record.CreateMutableBinding(identifier._expressionName, false);
+                        record.CreateMutableBinding(dn, false);
                     }
                 }
-            }
 
+                if (d is JintFunctionDeclarationStatement)
+                {
+                    // record.InitializeBinding(d.BoundNames[0], fo);
+                }
+            }
         }
+
     }
 }

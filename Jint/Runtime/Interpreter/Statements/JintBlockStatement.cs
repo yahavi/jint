@@ -1,7 +1,6 @@
-using Esprima;
 using Esprima.Ast;
 using Jint.Runtime.Environments;
-using Jint.Runtime.Interpreter.Expressions;
+using Jint.Runtime.Interpreter.Declarations;
 
 namespace Jint.Runtime.Interpreter.Statements
 {
@@ -30,7 +29,7 @@ namespace Jint.Runtime.Interpreter.Statements
             {
                 _engine.LeaveExecutionContext();
             }           
-
         }
+
     }
 }
