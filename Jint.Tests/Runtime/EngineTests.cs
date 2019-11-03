@@ -2600,15 +2600,24 @@ var prep = function (fn) { fn(); };
         public void ShouldReturnCorrectConcatenatedStrings()
         {
             RunTest(@"
-                function concat(x, a, b) {
-                    x += a;
-                    x += b;
+                function concat(x) {
+                    x = 'foo';
+                    x += 'bar';
                     return x;
-                }");
+                }
+                equal(concat('eh'), 'foobar');
+            ");
 
-            var concat = _engine.GetValue("concat");
-            var result = concat.Invoke("concat", "well", "done").ToObject() as string;
-            Assert.Equal("concatwelldone", result);
+            //RunTest(@"
+            //    function concat(x, a, b) {
+            //        x += a;
+            //        x += b;
+            //        return x;
+            //    }");
+
+            //var concat = _engine.GetValue("concat");
+            //var result = concat.Invoke("concat", "well", "done").ToObject() as string;
+            //Assert.Equal("concatwelldone", result);
         }
 
         [Fact]

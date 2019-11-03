@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Jint.Native;
 using Jint.Native.Object;
@@ -14,16 +15,35 @@ namespace Jint.Runtime.Environments
     {
         private readonly ObjectInstance _bindingObject;
         private readonly bool _provideThis;
+        private readonly bool _withEnvironment;
 
-        public ObjectEnvironmentRecord(Engine engine, ObjectInstance bindingObject, bool provideThis) : base(engine)
+        public ObjectEnvironmentRecord(Engine engine, ObjectInstance bindingObject, bool provideThis, bool withEnvironment) : base(engine)
         {
             _bindingObject = bindingObject;
             _provideThis = provideThis;
+            _withEnvironment = withEnvironment;
         }
 
+        /// <summary>
+        /// The concrete Environment Record method HasBinding for object Environment Records determines if its associated binding object has a property whose name is the value of the argument N:
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public override bool HasBinding(in Key name)
         {
-            return _bindingObject.HasProperty(name);
+            if (!_bindingObject.HasProperty(name))
+            {
+                return false;
+            }
+
+            if (!_withEnvironment)
+            {
+                return true;
+            }
+
+            // TODO: Step 7 and following
+
+            return false;
         }
 
         internal override bool TryGetBinding(
@@ -47,15 +67,28 @@ namespace Jint.Runtime.Environments
         }
 
         /// <summary>
-        /// http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.1.2.2
+        /// http://www.ecma-international.org/ecma-262/6.0/#sec-object-environment-records-createmutablebinding-n-d
         /// </summary>
-        public override void CreateMutableBinding(in Key name, JsValue value, bool configurable = true)
+        public override void CreateMutableBinding(in Key name, bool configurable = true)
         {
             var propertyDescriptor = configurable
-                ? new PropertyDescriptor(value, PropertyFlag.ConfigurableEnumerableWritable)
-                : new PropertyDescriptor(value, PropertyFlag.NonConfigurable);
+                ? new PropertyDescriptor(Undefined, PropertyFlag.ConfigurableEnumerableWritable)
+                : new PropertyDescriptor(Undefined, PropertyFlag.NonConfigurable);
 
             _bindingObject.SetOwnProperty(name, propertyDescriptor);
+        }
+
+        /// <summary>
+        /// http://www.ecma-international.org/ecma-262/6.0/#sec-object-environment-records-createimmutablebinding-n-s
+        /// </summary>
+        public override void CreateImmutableBinding(in Key name, bool configurable = true)
+        {
+            Debug.Assert(false);
+        }
+
+        public override void InitializeBinding(in Key name, JsValue value)
+        {
+
         }
 
         public override void SetMutableBinding(in Key name, JsValue value, bool strict)

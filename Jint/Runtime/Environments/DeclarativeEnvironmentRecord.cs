@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using Esprima.Ast;
+﻿using Esprima.Ast;
 using Jint.Collections;
 using Jint.Native;
 using Jint.Native.Argument;
@@ -8,6 +6,9 @@ using Jint.Native.Array;
 using Jint.Native.Function;
 using Jint.Native.Iterator;
 using Jint.Runtime.Interpreter.Expressions;
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Jint.Runtime.Environments
 {
@@ -49,58 +50,101 @@ namespace Jint.Runtime.Environments
             out Binding binding,
             out JsValue value)
         {
-            var success = _dictionary.TryGetValue(name, out binding);
-            value = success ? UnwrapBindingValue(strict, binding) : default;
-            return success;
+            if (_dictionary.TryGetValue(name, out binding))
+            {
+
+                if (!binding.Mutable && !binding.IsInitialized)
+                {
+                    if (strict)
+                    {
+                        ExceptionHelper.ThrowReferenceError(_engine, $"Uninitialized binding '{name}'.");
+                    }
+
+                    value = Undefined;
+                }
+
+                value = binding.Value;
+
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
-        public override void CreateMutableBinding(in Key name, JsValue value, bool canBeDeleted = false)
+        public override void CreateMutableBinding(in Key name, bool canBeDeleted = false)
         {
-            _dictionary[name] = new Binding(value, canBeDeleted, mutable: true);
+            _dictionary[name] = new Binding(canBeDeleted, mutable: true, strict: false);
         }
 
-        public override void SetMutableBinding(in Key name, JsValue value, bool strict)
+        public override void CreateImmutableBinding(in Key name, bool strict = false)
         {
-            ref var binding = ref GetOrCreateBinding(name);
+            _dictionary[name] = new Binding(false, mutable: false, strict: strict);
+        }
 
-            if (binding.Mutable)
+        public override void InitializeBinding(in Key name, JsValue value)
+        {
+            if (_dictionary.TryGetValue(name, out var binding))
             {
                 binding.Value = value;
             }
             else
             {
+                throw new JavaScriptException($"The binding for '{name}' could not be found.");
+            }
+        }
+
+        public override void SetMutableBinding(in Key name, JsValue value, bool strict)
+        {
+            if (!_dictionary.TryGetValue(name, out var binding))
+            {
                 if (strict)
                 {
-                    ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
+                    ExceptionHelper.ThrowReferenceError(_engine, "Can't update the value of an innexisting binding.");
                 }
+
+                // These are the spec steps
+                //CreateMutableBinding(name, true);
+                //InitializeBinding(name, value);
+
+                // This is an optimization
+                _dictionary[name] = new Binding(canBeDeleted: true, mutable: true, strict: false) { Value = value };
+
+                return;
             }
+            
+            if (!binding.IsInitialized)
+            {
+                ExceptionHelper.ThrowReferenceError(_engine, $"The binding '{name}' has not yet been initialized.");
+            }
+            else
+            {
+                if (binding.Mutable)
+                {
+                    binding.Value = value;
+                }
+                else
+                {
+                    if (binding.Strict)
+                    {
+                        ExceptionHelper.ThrowTypeError(_engine, "Can't update the value of an immutable binding.");
+                    }
+                }
+            }            
         }
 
         public override JsValue GetBindingValue(in Key name, bool strict)
         {
-            ref var binding = ref GetOrCreateBinding(name);
-            return UnwrapBindingValue(strict, binding);
-        }
+            Debug.Assert(_dictionary.ContainsKey(name));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private JsValue UnwrapBindingValue(bool strict, in Binding binding)
-        {
-            if (!binding.Mutable && !binding.IsInitialized)
+            ref var binding = ref _dictionary[name];
+
+            if (!binding.IsInitialized)
             {
-                if (strict)
-                {
-                    ThrowUninitializedBindingException();
-                }
-
-                return Undefined;
+                ExceptionHelper.ThrowReferenceError(_engine, $"The binding '{name}' is uninitialized.");
             }
 
             return binding.Value;
-        }
-
-        private void ThrowUninitializedBindingException()
-        {
-            throw new JavaScriptException(_engine.ReferenceError, "Can't access an uninitialized immutable binding.");
         }
 
         public override bool DeleteBinding(in Key name)
@@ -151,7 +195,7 @@ namespace Jint.Runtime.Environments
 
             if (!(functionInstance is ArrowFunctionInstance))
             {
-                _dictionary[KnownKeys.Arguments] = new Binding(argumentsInstance, canBeDeleted: false, mutable: true);
+                _dictionary[KnownKeys.Arguments] = new Binding(canBeDeleted: false, mutable: true, false) { Value = argumentsInstance };
             }
 
             for (var i = 0; i < parameters.Count; i++)
@@ -317,7 +361,7 @@ namespace Jint.Runtime.Environments
         {
             if (initiallyEmpty || !TryGetValue(name, out var existing))
             {
-                _dictionary[name] = new Binding(argument, false, true);
+                _dictionary[name] = new Binding(false, true, false) { Value = argument };
             }
             else
             {
@@ -348,7 +392,7 @@ namespace Jint.Runtime.Environments
                         Key dn = id.Name;
                         if (!ContainsKey(dn))
                         {
-                            var binding = new Binding(Undefined, canBeDeleted: false, mutable: true);
+                            var binding = new Binding(canBeDeleted: false, mutable: true, false) { Value = Undefined };
                             _dictionary[dn] = binding;
                         }
                     }

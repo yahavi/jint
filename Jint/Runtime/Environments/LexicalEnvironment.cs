@@ -76,9 +76,9 @@ namespace Jint.Runtime.Environments
             return environment;
         }
 
-        public static LexicalEnvironment NewObjectEnvironment(Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis)
+        public static LexicalEnvironment NewObjectEnvironment(Engine engine, ObjectInstance objectInstance, LexicalEnvironment outer, bool provideThis, bool withEnvironment)
         {
-            return new LexicalEnvironment(engine, new ObjectEnvironmentRecord(engine, objectInstance, provideThis), outer);
+            return new LexicalEnvironment(engine, new ObjectEnvironmentRecord(engine, objectInstance, provideThis, withEnvironment), outer);
         }
     }
 }

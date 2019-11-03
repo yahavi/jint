@@ -195,7 +195,7 @@ namespace Jint
             Object.Prototype = Function.PrototypeObject;
 
             // create the global environment http://www.ecma-international.org/ecma-262/5.1/#sec-10.2.3
-            GlobalEnvironment = LexicalEnvironment.NewObjectEnvironment(this, Global, null, false);
+            GlobalEnvironment = LexicalEnvironment.NewObjectEnvironment(this, Global, null, false, false);
 
             // create the global execution context http://www.ecma-international.org/ecma-262/5.1/#sec-10.4.1.1
             EnterExecutionContext(GlobalEnvironment, GlobalEnvironment, Global);
@@ -773,14 +773,18 @@ namespace Jint
                         v = DeclarativeEnvironmentRecord.HandleAssignmentPatternIfNeeded(functionDeclaration, v, i);
 
                         var argAlreadyDeclared = env.HasBinding(argName);
+
                         if (!argAlreadyDeclared)
                         {
-                            env.CreateMutableBinding(argName, v);
+                            env.CreateMutableBinding(argName);
+                            env.InitializeBinding(argName, v);
                         }
 
                         env.SetMutableBinding(argName, v, strict);
                     }
-                    env.CreateMutableBinding(KnownKeys.Arguments, argsObj);
+
+                    env.CreateMutableBinding(KnownKeys.Arguments);
+                    env.InitializeBinding(KnownKeys.Arguments, argsObj);
                 }
             }
 
@@ -819,7 +823,7 @@ namespace Jint
                             var varAlreadyDeclared = env.HasBinding(name);
                             if (!varAlreadyDeclared)
                             {
-                                env.CreateMutableBinding(name, Undefined.Instance);
+                                env.CreateMutableBinding(name);
                             }
                         }
                     }
