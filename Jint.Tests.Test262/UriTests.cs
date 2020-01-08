@@ -4,7 +4,7 @@ namespace Jint.Tests.Test262
 {
     public class UriTests : Test262Test
     {
-        [Theory(DisplayName = "built-ins\\decodeURI")]
+        [Theory(DisplayName = "built-ins\\decodeURI", Skip = "Skipped")]
         [MemberData(nameof(SourceFiles), "built-ins\\decodeURI", false)]
         [MemberData(nameof(SourceFiles), "built-ins\\decodeURI", true, Skip = "Skipped")]
         protected void DecodeUri(SourceFile sourceFile)
@@ -12,7 +12,7 @@ namespace Jint.Tests.Test262
             RunTestInternal(sourceFile);
         }
 
-        [Theory(DisplayName = "built-ins\\decodeURIComponent")]
+        [Theory(DisplayName = "built-ins\\decodeURIComponent", Skip = "Skipped")]
         [MemberData(nameof(SourceFiles), "built-ins\\decodeURIComponent", false)]
         [MemberData(nameof(SourceFiles), "built-ins\\decodeURIComponent", true, Skip = "Skipped")]
         protected void DecodeUriComponent(SourceFile sourceFile)
@@ -20,7 +20,7 @@ namespace Jint.Tests.Test262
             RunTestInternal(sourceFile);
         }
 
-        [Theory(DisplayName = "built-ins\\encodeURI")]
+        [Theory(DisplayName = "built-ins\\encodeURI", Skip = "Skipped")]
         [MemberData(nameof(SourceFiles), "built-ins\\encodeURI", false)]
         [MemberData(nameof(SourceFiles), "built-ins\\encodeURI", true, Skip = "Skipped")]
         protected void EncodeUri(SourceFile sourceFile)
@@ -28,7 +28,7 @@ namespace Jint.Tests.Test262
             RunTestInternal(sourceFile);
         }
 
-        [Theory(DisplayName = "built-ins\\encodeURIComponent")]
+        [Theory(DisplayName = "built-ins\\encodeURIComponent", Skip = "Skipped")]
         [MemberData(nameof(SourceFiles), "built-ins\\encodeURIComponent", false)]
         [MemberData(nameof(SourceFiles), "built-ins\\encodeURIComponent", true, Skip = "Skipped")]
         protected void EncodeUriComponent(SourceFile sourceFile)

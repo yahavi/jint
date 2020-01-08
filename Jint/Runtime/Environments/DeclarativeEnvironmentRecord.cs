@@ -24,11 +24,6 @@ namespace Jint.Runtime.Environments
         {
         }
         
-        private ref Binding GetOrCreateBinding(in Key key)
-        {
-            return ref _dictionary.GetOrAddValueRef(key);
-        }
-
         private bool ContainsKey(in Key key)
         {
             return _dictionary?.ContainsKey(key) == true;
@@ -84,8 +79,10 @@ namespace Jint.Runtime.Environments
 
         public override void InitializeBinding(in Key name, JsValue value)
         {
-            if (_dictionary.TryGetValue(name, out var binding))
+            if (_dictionary.ContainsKey(name))
             {
+                ref var binding = ref _dictionary.GetOrAddValueRef(name);
+
                 binding.Value = value;
             }
             else
@@ -96,7 +93,7 @@ namespace Jint.Runtime.Environments
 
         public override void SetMutableBinding(in Key name, JsValue value, bool strict)
         {
-            if (!_dictionary.TryGetValue(name, out var binding))
+            if (!_dictionary.ContainsKey(name))
             {
                 if (strict)
                 {
@@ -112,7 +109,10 @@ namespace Jint.Runtime.Environments
 
                 return;
             }
-            
+
+            // it's important to get a reference to the binding as not to update a clone
+            ref var binding = ref _dictionary.GetOrAddValueRef(name);
+
             if (!binding.IsInitialized)
             {
                 ExceptionHelper.ThrowReferenceError(_engine, $"The binding '{name}' has not yet been initialized.");
@@ -367,7 +367,7 @@ namespace Jint.Runtime.Environments
             {
                 if (existing.Mutable)
                 {
-                    ref var b = ref GetOrCreateBinding(name);
+                    ref var b = ref _dictionary.GetOrAddValueRef(name);
                     b.Value = argument;
                 }
                 else
