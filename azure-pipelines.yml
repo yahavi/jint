@@ -12,8 +12,9 @@ steps:
     command: 'restore'
     arguments: '-PackagesDirectory'
     artifactoryService: 'ecosys'
-    targetResolveRepo: 'robi-nuget-virtual'
+    targetResolveRepo: 'nuget-local'
     solutionPath: '**/*.sln'
+    packagesDirectory: '$(Build.ArtifactStagingDirectory)'
     collectBuildInfo: true
     buildName: '$(Build.DefinitionName)'
     buildNumber: '$(Build.BuildNumber)'
