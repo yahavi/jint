@@ -22,8 +22,8 @@ steps:
   inputs:
     command: 'push'
     artifactoryService: 'ecosys'
-    targetDeployRepo: 'robi-nuget'
-    pathToNupkg: '*.nupkg'
+    targetDeployRepo: 'nuget-local'
+    pathToNupkg: '$(build.artifactsstagingdirectory)\*.nupkg'
     collectBuildInfo: true
     buildName: '$(Build.DefinitionName)'
     buildNumber: '$(Build.BuildNumber)'
