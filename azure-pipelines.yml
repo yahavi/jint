@@ -14,7 +14,7 @@ steps:
     artifactoryService: 'ecosys'
     targetResolveRepo: 'robi-nuget-virtual'
     solutionPath: '**/*.sln'
-    # packagesDirectory: '$(Build.ArtifactStagingDirectory)'
+    packagesDirectory: '$(Build.ArtifactStagingDirectory)'
     collectBuildInfo: true
     buildName: '$(Build.DefinitionName)'
     buildNumber: '$(Build.BuildNumber)'
