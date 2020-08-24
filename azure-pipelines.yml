@@ -12,7 +12,7 @@ steps:
     command: 'restore'
     arguments: '-PackagesDirectory'
     artifactoryService: 'ecosys'
-    targetResolveRepo: 'nuget-local'
+    targetResolveRepo: 'nuget'
     solutionPath: '**/*.sln'
     packagesDirectory: '$(Build.ArtifactStagingDirectory)'
     collectBuildInfo: true
