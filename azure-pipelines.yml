@@ -23,7 +23,7 @@ steps:
     command: 'push'
     artifactoryService: 'ecosys'
     targetDeployRepo: 'nuget-local'
-    pathToNupkg: '$(build.artifactsstagingdirectory)\*.nupkg'
+    pathToNupkg: '$(Build.ArtifactStagingDirectory)\*.nupkg'
     collectBuildInfo: true
     buildName: '$(Build.DefinitionName)'
     buildNumber: '$(Build.BuildNumber)'
