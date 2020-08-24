@@ -18,6 +18,13 @@ steps:
     buildName: '$(Build.DefinitionName)'
     buildNumber: '$(Build.BuildNumber)'
     includeEnvVars: true
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: 'D:\a\1\a\xunit\2.4.1\xunit.2.4.1.nupkg'
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)\.nuget'
+
 - task: ArtifactoryNuGet@2
   inputs:
     command: 'push'
