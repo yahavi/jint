@@ -12,7 +12,7 @@ steps:
     command: 'restore'
     arguments: '-PackagesDirectory'
     artifactoryService: 'ecosys'
-    targetResolveRepo: 'nuget'
+    targetResolveRepo: 'robi-nuget-virtual'
     solutionPath: '**/*.sln'
     # packagesDirectory: '$(Build.ArtifactStagingDirectory)'
     collectBuildInfo: true
@@ -23,7 +23,7 @@ steps:
   inputs:
     command: 'push'
     artifactoryService: 'ecosys'
-    targetDeployRepo: 'nuget-local'
+    targetDeployRepo: 'robi-nuget-virtual'
     pathToNupkg: '$(Build.ArtifactStagingDirectory)\*.nupkg'
     collectBuildInfo: true
     buildName: '$(Build.DefinitionName)'
