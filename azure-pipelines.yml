@@ -23,7 +23,7 @@ steps:
   inputs:
     SourceFolder: 'D:\a\1\a\xunit\2.4.1\xunit.2.4.1.nupkg'
     Contents: '**'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)\.nuget'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)\.nupkg'
 
 - task: ArtifactoryNuGet@2
   inputs:
